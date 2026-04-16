@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Transformations Playground</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- p5.js for canvas drawing and math -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        /* Custom range slider styling for a cleaner look */
+        input[type=range] {
+            accent-color: #4f46e5; /* Indigo 600 */
+        }
+        canvas {
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8 font-sans text-gray-800">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">2D Geometric Transformations</h1>
+            <p class="text-gray-600">Drag the red points on the Identity shape (top-left) to see how transformations affect the geometry in real-time.</p>
+        </header>
+
+        <!-- Main Grid Container -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- (a) Identity / Base Shape -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center">
+                <h2 class="text-lg font-bold mb-1 w-full text-center">Identity </h2>
+                <p class="text-xs text-gray-500 mb-3 text-center">Base geometric shape.</p>
+                <div id="canvas-identity" class="mb-4"></div>
+                <div class="w-full text-center text-sm p-2 rounded">
+                    <span class="font-bold">Draggable:</span> Drag the vertices to change the shape.
+                </div>
+            </div>
+
+            <!-- (b) Translation -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center">
+                <h2 class="text-lg font-bold mb-1 w-full text-center">Translation</h2>
+                <p class="text-xs text-gray-500 mb-3 text-center">Shifts the object along X and Y axes.</p>
+                <div id="canvas-translation" class="mb-4"></div>
+                <div class="w-full flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold w-16">Tx: <span id="tx-val" class="font-normal">50</span></label>
+                        <input type="range" id="tx-slider" min="-150" max="150" value="50" step="1" class="flex-1">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold w-16">Ty: <span id="ty-val" class="font-normal">30</span></label>
+                        <input type="range" id="ty-slider" min="-150" max="150" value="30" step="1" class="flex-1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- (c) Rotation -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center">
+                <h2 class="text-lg font-bold mb-1 w-full text-center">Rotation</h2>
+                <p class="text-xs text-gray-500 mb-3 text-center">Rotates the object about the origin (0,0).</p>
+                <div id="canvas-rotation" class="mb-4"></div>
+                <div class="w-full flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold w-24">&theta; (deg): <span id="th-val" class="font-normal">45</span></label>
+                        <input type="range" id="th-slider" min="-180" max="180" value="45" step="1" class="flex-1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- (d) Scaling -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center">
+                <h2 class="text-lg font-bold mb-1 w-full text-center">Scaling</h2>
+                <p class="text-xs text-gray-500 mb-3 text-center">Resizes the object. Negative flips it.</p>
+                <div id="canvas-scale" class="mb-4"></div>
+                <div class="w-full flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold w-16">Sx: <span id="sx-val" class="font-normal">1.5</span></label>
+                        <input type="range" id="sx-slider" min="-3" max="3" value="1.5" step="0.1" class="flex-1">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold w-16">Sy: <span id="sy-val" class="font-normal">1.5</span></label>
+                        <input type="range" id="sy-slider" min="-3" max="3" value="1.5" step="0.1" class="flex-1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- (e) Shearing -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center">
+                <h2 class="text-lg font-bold mb-1 w-full text-center">Shearing (Skew)</h2>
+                <p class="text-xs text-gray-500 mb-3 text-center">Slants the object along the axes.</p>
+                <div id="canvas-shear" class="mb-4"></div>
+                <div class="w-full flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold w-20">Skew X: <span id="shx-val" class="font-normal">0.5</span></label>
+                        <input type="range" id="shx-slider" min="-2" max="2" value="0.5" step="0.1" class="flex-1">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold w-20">Skew Y: <span id="shy-val" class="font-normal">0</span></label>
+                        <input type="range" id="shy-slider" min="-2" max="2" value="0" step="0.1" class="flex-1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- (f) Reflection -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center">
+                <h2 class="text-lg font-bold mb-1 w-full text-center">Reflection</h2>
+                <p class="text-xs text-gray-500 mb-3 text-center">Flips the object across the chosen axis.</p>
+                <div id="canvas-reflection" class="mb-4"></div>
+                <div class="w-full flex justify-center gap-8 mt-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="refx-check" class="w-4 h-4 text-indigo-600 rounded border-gray-300">
+                        <span class="text-sm font-semibold">Reflect X-Axis</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="refy-check" checked class="w-4 h-4 text-indigo-600 rounded border-gray-300">
+                        <span class="text-sm font-semibold">Reflect Y-Axis</span>
+                    </label>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const baseShape = [
+            {x: -20, y: -40},
+            {x: -20, y: 40},
+            {x: 30, y: 40},
+            {x: 30, y: 20},
+            {x: 0, y: 20},
+            {x: 0, y: 0},
+            {x: 20, y: 0},
+            {x: 20, y: -20},
+            {x: 0, y: -20},
+            {x: 0, y: -40}
+        ];
+
+        const SIZE = 280;
+
+        function drawGrid(p){
+            p.push();
+            p.stroke(230);
+            for(let i=-p.width/2;i<p.width/2;i+=20){
+                p.line(i,-p.height/2,i,p.height/2);
+                p.line(-p.width/2,i,p.width/2,i);
+            }
+            p.stroke(120);
+            p.line(0,-p.height/2,0,p.height/2);
+            p.line(-p.width/2,0,p.width/2,0);
+            p.pop();
+        }
+
+        function ghost(p){
+            p.push();
+            p.fill(200,200,200,80);
+            p.beginShape();
+            baseShape.forEach(pt=>p.vertex(pt.x,pt.y));
+            p.endShape(p.CLOSE);
+            p.pop();
+        }
+
+        // --- (a) Identity Sketch ---
+        new p5((p) => {
+            let draggedPoint = null;
+
+            p.setup = () => {
+                let canvas = p.createCanvas(SIZE, SIZE);
+                canvas.parent('canvas-identity');
+            };
+
+            p.draw = () => {
+                p.background(255);
+                
+                // Move origin to center and flip Y-axis
+                p.translate(p.width / 2, p.height / 2);
+                p.scale(1, -1); 
+
+                drawGrid(p);
+
+                // Draw base shape
+                p.fill(100, 150, 255, 150);
+                p.stroke(50, 100, 255);
+                p.strokeWeight(2);
+                p.beginShape();
+                baseShape.forEach(point => {
+                    p.vertex(point.x, point.y);
+                });
+                p.endShape(p.CLOSE);
+
+                // Draw draggable points
+                p.fill(239, 68, 68);
+                p.stroke(255);
+                p.strokeWeight(1);
+                baseShape.forEach(point => {
+                    p.circle(point.x, point.y, 10);
+                });
+            };
+
+            p.mousePressed = () => {
+                if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
+                    let mx = p.mouseX - p.width / 2;
+                    let my = -(p.mouseY - p.height / 2);
+
+                    for (let point of baseShape) {
+                        if (p.dist(mx, my, point.x, point.y) < 12) {
+                            draggedPoint = point;
+                            break;
+                        }
+                    }
+                }
+            };
+
+            p.mouseDragged = () => {
+                if (draggedPoint) {
+                    draggedPoint.x = p.mouseX - p.width / 2;
+                    draggedPoint.y = -(p.mouseY - p.height / 2);
+                }
+            };
+
+            p.mouseReleased = () => {
+                draggedPoint = null;
+            };
+        });
+
+        // ---------------- TRANSLATION ----------------
+        new p5(p=>{
+            let sx = document.getElementById('tx-slider');
+            let sy = document.getElementById('ty-slider');
+
+            p.setup=()=>{
+                let c=p.createCanvas(SIZE,SIZE);
+                c.parent('canvas-translation');
+            };
+
+            p.draw=()=>{
+                p.background(255);
+                p.translate(p.width/2,p.height/2);
+                p.scale(1,-1);
+
+                drawGrid(p);
+                ghost(p);
+
+                let moveX=parseFloat(sx.value);
+                let moveY=parseFloat(sy.value);
+
+                p.fill(50,200,100);
+                p.beginShape();
+                baseShape.forEach(pt=>{
+                    let nx=pt.x+moveX;
+                    let ny=pt.y+moveY;
+                    p.vertex(nx,ny);
+                });
+                p.endShape(p.CLOSE);
+            };
+        });
+
+        // ---------------- ROTATION ----------------
+        new p5(p=>{
+            let slider=document.getElementById('th-slider');
+
+            p.setup=()=>{
+                let c=p.createCanvas(SIZE,SIZE);
+                c.parent('canvas-rotation');
+            };
+
+            p.draw=()=>{
+                p.background(255);
+                p.translate(p.width/2,p.height/2);
+                p.scale(1,-1);
+
+                drawGrid(p);
+                ghost(p);
+
+                let angleDeg=parseFloat(slider.value);
+                let rad=angleDeg*Math.PI/180;
+
+                let cA=Math.cos(rad);
+                let sA=Math.sin(rad);
+
+                p.fill(170,100,255);
+                p.beginShape();
+                baseShape.forEach(pt=>{
+                    let nx=pt.x*cA-pt.y*sA;
+                    let ny=pt.x*sA+pt.y*cA;
+                    p.vertex(nx,ny);
+                });
+                p.endShape(p.CLOSE);
+            };
+        });
+
+        // ---------------- SCALING ----------------
+        new p5(p=>{
+            let sx=document.getElementById('sx-slider');
+            let sy=document.getElementById('sy-slider');
+
+            p.setup=()=>{
+                let c=p.createCanvas(SIZE,SIZE);
+                c.parent('canvas-scale');
+            };
+
+            p.draw=()=>{
+                p.background(255);
+                p.translate(p.width/2,p.height/2);
+                p.scale(1,-1);
+
+                drawGrid(p);
+                ghost(p);
+
+                let scaleX=parseFloat(sx.value);
+                let scaleY=parseFloat(sy.value);
+
+                p.fill(230,180,20);
+                p.beginShape();
+                baseShape.forEach(pt=>{
+                    let nx=pt.x*scaleX;
+                    let ny=pt.y*scaleY;
+                    p.vertex(nx,ny);
+                });
+                p.endShape(p.CLOSE);
+            };
+        });
+
+        // ---------------- SHEAR ----------------
+        new p5(p=>{
+            let sx=document.getElementById('shx-slider');
+            let sy=document.getElementById('shy-slider');
+
+            p.setup=()=>{
+                let c=p.createCanvas(SIZE,SIZE);
+                c.parent('canvas-shear');
+            };
+
+            p.draw=()=>{
+                p.background(255);
+                p.translate(p.width/2,p.height/2);
+                p.scale(1,-1);
+
+                drawGrid(p);
+                ghost(p);
+
+                let shx=parseFloat(sx.value);
+                let shy=parseFloat(sy.value);
+
+                p.fill(240,80,150);
+                p.beginShape();
+                baseShape.forEach(pt=>{
+                    let nx=pt.x+pt.y*shx;
+                    let ny=pt.y+pt.x*shy;
+                    p.vertex(nx,ny);
+                });
+                p.endShape(p.CLOSE);
+            };
+        });
+
+        // ---------------- REFLECTION ----------------
+        new p5(p=>{
+            let cx=document.getElementById('refx-check');
+            let cy=document.getElementById('refy-check');
+
+            p.setup=()=>{
+                let c=p.createCanvas(SIZE,SIZE);
+                c.parent('canvas-reflection');
+            };
+
+            p.draw=()=>{
+                p.background(255);
+                p.translate(p.width/2,p.height/2);
+                p.scale(1,-1);
+
+                drawGrid(p);
+                ghost(p);
+
+                let flipX=cx.checked;
+                let flipY=cy.checked;
+
+                p.fill(20,160,230);
+                p.beginShape();
+                baseShape.forEach(pt=>{
+                    let nx=flipY ? -pt.x : pt.x;
+                    let ny=flipX ? -pt.y : pt.y;
+                    p.vertex(nx,ny);
+                });
+                p.endShape(p.CLOSE);
+            };
+        });
+</script>
+</body>
+</html>
